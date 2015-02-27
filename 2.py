@@ -4,20 +4,23 @@ import pickle
 import sys
 import re
 class URL:
-	def __init__(self):
-		self.m_url=""
+	def __init__(self,url):
+		self.m_url=url
 		self.m_count=0
 
 
 class Chanel:
 	def __init__(self):
 		self.m_name=''
-		self.m_url=[URL()]
+		self.m_url=[URL("")]
 		self.m_group=''
 		self.m_id=0
 
+
 g_base_name_file="base.db"
-g_Base = [Chanel()]
+g_playlist_name="1.m3u"
+g_Base = []
+g_flag=""
 
 def loadBase():
 	try:
@@ -26,7 +29,7 @@ def loadBase():
 		f.close()
 		print ("Base Loaded")
 	except:
-		print "empty"
+		print ("empty")
 
 def saveBase():
 	try:
@@ -36,19 +39,25 @@ def saveBase():
 	except:
 		print ("ERROR: Dont save Base")
 
+def addToBase(name,url):
+	for a in g_Base:
+		if a.m_name == name:
+			if not(url in a.m_url):
+				a.m_url.append(URL(url))
+				return
+	b = Chanel()
+	b.m_name = name
+	b.m_url=[URL(url)]
+	g_Base.append(b)
+	print ("GBase count: " + str(len(g_Base)))
+
 def scan():
-	load=True
-	try:
-		if sys.argv[2]=="new":
-			load=False
-	except:
-		pass
-	if load:
+	global g_flag
+	global g_playlist_name
+	if g_flag != "new":
 		loadBase()
-	
 	try:
-		name="1.m3u"
-		f=open(name,"r")
+		f=open(g_playlist_name,"r")
 		l=f.readlines()
 		f.close()
 		n=0
@@ -63,8 +72,10 @@ def scan():
 				while re.match("[\s]{1,}",url):
 					n+=1
 					url=l[n]
-				name = s[1] 
+				s=re.split(",",i)
+				name = s[1]			
 				print("%d:%s url:%s" % (n,name,url))
+				addToBase(name,url)
 			elif re.match(r"#EXT-X-",i):
 				print("ERROR: find new tag %s", i)
 			n+=1
@@ -80,25 +91,23 @@ def main():
 	print ("params: scan заполнение базы по mзu листам")
 	print ("example:")
 	print ("	lnx>$2.py scan")
+
+	global g_flag
+	global g_playlist_name
+
 	mode="scan"
+
 	try:
 		if sys.argv[1] =="scan":
 			mode="scan"
-	except:
+			if sys.argv[2]=='new':
+				g_flag="new"
+			else:
+				g_playlist_name = sys.argv[2]		
+	except:		
 		pass 	
 	if mode=="scan":
 		scan()
 
 main()	
-
-#a=[AA()]
-#a[0].m_name='name'
-#a[0].m_url.append('http://127.0.0.1')
-#a[0].m_group='default'
-
-#f=open('tt.txt',"wb")
-
-#pickle.dump(a,f)
-#f.close()
-
 
