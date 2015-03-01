@@ -19,12 +19,11 @@ class Chanel:
 		self.m_group=''
 		self.m_id=0
 
-
+g_noname_base_file="noname.db"
 g_base_name_file="base.db"
 g_playlist_name="edem.m3u"
 g_Base = []
 g_NoNameChanels=[]
-g_flag=""
 
 def loadBase():
 	global g_Base
@@ -46,6 +45,24 @@ def saveBase():
 	except:
 		print ("ERROR: Dont save Base")
 
+def saveNoNameChanel():
+	global g_NoNameChanels
+	try:
+		f=open(g_noname_base_file,"wb")
+		pickle.dump(g_NoNameChanels,f)
+		f.close()
+	except:
+		print ("ERROR: Dont save NoNameBase")
+
+def loadNoNameChanel():
+	global g_NoNameChanels
+	try:
+		f=open(g_noname_base_file,"rb")
+		g_NoNameChanels=pickle.load(f)
+		f.close()
+	except:
+		print ("ERROR: Dont load NoNameBase")
+
 def addToBase(name,url):
 	global g_Base
 	global g_NoNameChanels
@@ -64,13 +81,11 @@ def addToBase(name,url):
 	b.m_name = name
 	b.m_url=[URL(url)]
 	g_Base.append(b)
-	print ("GBase count: " + str(len(g_Base)))
+	print ("GBase count: " + str(len(g_Base)))			
 
 def scan():
-	global g_flag
 	global g_playlist_name
-	if g_flag != "new":
-		loadBase()
+	loadBase()
 	try:
 		f=open(g_playlist_name,"r")
 		l=f.readlines()
@@ -104,30 +119,51 @@ def scan():
 
 	if len(g_Base) > 0:
 		saveBase()
+	if len(g_NoNameChanels) > 0:
+		saveNoNameChanel()
 
-def validate():
+def testUrl(p,url):
+	ret=False
+	print "url:" + url
+	if not(re.match("rtmp:",url)):
+		p.set_mrl(url)
+		p.play()
+		for ii in range(0,15):
+			time.sleep(1)
+			if p.is_playing():
+				ret=True
+			print str(ii)+" play:"+str(p.is_playing())+" state: "+ str(p.get_state())
+			if p.get_state()==vlc.State.NothingSpecial:
+				continue
+			elif p.get_state()!=vlc.State.Opening:
+				print p.get_state()
+				break
+		p.stop()
+	return ret
+
+def validate(start):
 	global g_Base
 	i = vlc.Instance()
 	p = i.media_player_new()
-#	p.set_mrl("http://en356.edem.tv/iptv/LYB72PLY6GB4KR/102/index.m3u8")
-#	p.play()
-#	time.sleep(5)	
-#	p.set_mrl("http://en356.edem.tv/iptv/LYB72PLY6GB4KR/107/index.m3u8")
-#	p.play()
-#	time.sleep(5)
-#	return	
 	loadBase()
-	
+	n=0	
 	for i in g_Base:
 		for url in i.m_url:
-			print url.m_url
-			if not(re.match("rtmp:",url.m_url)):
-				p.set_mrl(url.m_url)
-				p.play()
-				time.sleep(1)
-				url.m_count=p.is_playing()
-				print "play: "+str(p.is_playing())+" state: "+ str(p.get_state())
-				p.stop()
+			n+=1
+			if n < start:
+				continue
+			url.m_count = testUrl(p, url.m_url)			
+			if n%10==0:
+				print "Saved: " + str(n)
+				saveBase()
+#			print url.m_url
+#			if not(re.match("rtmp:",url.m_url)):
+#				p.set_mrl(url.m_url)
+#				p.play()
+#				time.sleep(1)
+#				url.m_count=p.is_playing()
+#				print "play: "+str(p.is_playing())+" state: "+ str(p.get_state())
+#				p.stop()
 	saveBase()
 
 def genM3u():
@@ -144,6 +180,32 @@ def genM3u():
 		f.close()
 	except:
 		print("ERROR: ")
+def genNoNamePlaylist():
+	global g_NoNameChanels
+	validUrl=[]
+	loadNoNameChanel()
+	i = vlc.Instance()
+	p = i.media_player_new()
+	for url in g_NoNameChanels:
+		if testUrl(p,url):
+			validUrl.append(url)
+#		if not(re.match("rtmp:",url)):
+#				p.set_mrl(url)
+#				p.play()
+#				for ii in range(0,15):
+#					time.sleep(1)					
+#					if p.is_playing():
+#						validUrl.append(url)					
+#					print "play: "+str(p.is_playing())+" state: "+ str(p.get_state()) + str(ii)
+#					if p.get_state()!=vlc.State.Opening:
+#						print p.get_state()
+#						break
+#				p.stop()
+	f=open("noname.m3u","w")
+	f.write("#EXTM3U\n")
+	for url in validUrl:
+			f.write(url+"\n")
+	f.close()
 
 def main():
 	print ("******************************")
@@ -152,30 +214,32 @@ def main():
 	print ("example:")
 	print ("	lnx>$2.py scan")
 
-	global g_flag
 	global g_playlist_name
 
 	mode="gen"
-
+	start = 0
 	try:
 		if sys.argv[1] =="scan":
 			mode="scan"
-			if sys.argv[2]=='new':
-				g_flag="new"
-			else:
-				g_playlist_name = sys.argv[2]		
+			g_playlist_name = sys.argv[2]
 		elif sys.argv[1] =="validate":
 			mode="validate"
+			start = int(sys.argv[2])
+			print start
 		elif sys.argv[1] =="gen":
 			mode="gen"
+		elif sys.argv[1] =="genNoName":
+			mode="genNoName"
 	except:		
 		pass 	
 	if mode=="scan":
 		scan()
 	elif mode=="validate":
-		validate()
+		validate(start)
 	elif mode=="gen":
 		genM3u()
+	elif mode=="genNoName":
+		genNoNamePlaylist()
 
 
 main()	
