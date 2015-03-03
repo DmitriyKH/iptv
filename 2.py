@@ -161,17 +161,18 @@ def genM3u(priority):
 	loadBase()
 	pr=[]
 	try:
-		print ("Priority file:"+ priority)
-		f=open(priority,"r")
-		pr=f.readlines()
-		f.close()
-		pr=map(lambda x:re.sub("\s{1,}$","",x),pr)
-		for i in g_Base:
-			i.m_name=re.sub(r"\s{1,}$","",i.m_name)
-			i.pr=(i.m_name in pr)
-		g_Base= sorted(g_Base,key=lambda i:not(i.pr) ) 
+		if priority!="":
+			print ("Priority file:"+ priority)
+			f=open(priority,"r")
+			pr=f.readlines()
+			f.close()
+			pr=map(lambda x:re.sub("\s{1,}$","",x),pr)
+			for i in g_Base:
+				i.m_name=re.sub(r"\s{1,}$","",i.m_name)
+				i.pr=(i.m_name in pr)
+			g_Base= sorted(g_Base,key=lambda i:not(i.pr) ) 		
 	except:
-		print "ERROR:"	
+		print ("ERROR:priority file not found %s" % priority)	
 	try:
 		f = open("valid.m3u","w")
 		f.write("#EXTM3U\n")
@@ -199,6 +200,21 @@ def genNoNamePlaylist():
 			f.write(url+"\n")
 	f.close()
 
+def genList(flag):
+	loadBase()
+	global g_Base
+	for i in g_Base:
+		for url in i.m_url:
+			if flag=="":
+				print("valid:%d name:\"%s\" url:\"%s\" " % (url.m_count, i.m_name, url.m_url))
+			elif flag=="name":
+				print i.m_name
+				break
+			elif flag=="valid":
+				if url.m_count:
+					print i.m_name
+					break	
+
 def main():
 	print ("******************************")
 	print ("IPTV chanal validater ")
@@ -211,6 +227,7 @@ def main():
 	mode=""
 	start = 0
 	priority=""
+	flag =""
 	try:
 		if sys.argv[1] =="scan":
 			mode="scan"
@@ -224,6 +241,9 @@ def main():
 			priority=sys.argv[2]
 		elif sys.argv[1] =="genNoName":
 			mode="genNoName"
+		elif sys.argv[1]=="list":
+			mode = "list"
+			flag = sys.argv[2]
 	except:		
 		pass 	
 	if mode=="scan":
@@ -234,7 +254,9 @@ def main():
 		genM3u(priority)
 	elif mode=="genNoName":
 		genNoNamePlaylist()
+	elif mode=="list":
+		genList(flag)
 
 
-main()	
+main()
 
