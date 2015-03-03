@@ -104,10 +104,8 @@ def scan():
 					url=l[n]
 				s=re.split(",",i)
 				name = s[1]			
-				name = name.replace("\n","")
-				name = name.replace("\r","")
-				url = url.replace("\n","")
-				url = url.replace("\r","")
+				name = re.sub("\s{1,}$","",name)
+				url = re.sub("\s{1,}$","",url)
 				print("%d:%s url:%s" % (n,name,url))
 
 				addToBase(name,url)
