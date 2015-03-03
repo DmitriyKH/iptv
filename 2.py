@@ -156,19 +156,24 @@ def validate(start):
 			if n%10==0:
 				print "Saved: " + str(n)
 				saveBase()
-#			print url.m_url
-#			if not(re.match("rtmp:",url.m_url)):
-#				p.set_mrl(url.m_url)
-#				p.play()
-#				time.sleep(1)
-#				url.m_count=p.is_playing()
-#				print "play: "+str(p.is_playing())+" state: "+ str(p.get_state())
-#				p.stop()
 	saveBase()
 
-def genM3u():
-	global g_Base
+def genM3u(priority):
+	global g_Base	
 	loadBase()
+	pr=[]
+	try:
+		print ("Priority file:"+ priority)
+		f=open(priority,"r")
+		pr=f.readlines()
+		f.close()
+		pr=map(lambda x:re.sub("\s{1,}$","",x),pr)
+		for i in g_Base:
+			i.m_name=re.sub(r"\s{1,}$","",i.m_name)
+			i.pr=(i.m_name in pr)
+		g_Base= sorted(g_Base,key=lambda i:not(i.pr) ) 
+	except:
+		print "ERROR:"	
 	try:
 		f = open("valid.m3u","w")
 		f.write("#EXTM3U\n")
@@ -180,6 +185,7 @@ def genM3u():
 		f.close()
 	except:
 		print("ERROR: ")
+
 def genNoNamePlaylist():
 	global g_NoNameChanels
 	validUrl=[]
@@ -189,18 +195,6 @@ def genNoNamePlaylist():
 	for url in g_NoNameChanels:
 		if testUrl(p,url):
 			validUrl.append(url)
-#		if not(re.match("rtmp:",url)):
-#				p.set_mrl(url)
-#				p.play()
-#				for ii in range(0,15):
-#					time.sleep(1)					
-#					if p.is_playing():
-#						validUrl.append(url)					
-#					print "play: "+str(p.is_playing())+" state: "+ str(p.get_state()) + str(ii)
-#					if p.get_state()!=vlc.State.Opening:
-#						print p.get_state()
-#						break
-#				p.stop()
 	f=open("noname.m3u","w")
 	f.write("#EXTM3U\n")
 	for url in validUrl:
@@ -216,8 +210,9 @@ def main():
 
 	global g_playlist_name
 
-	mode="gen"
+	mode=""
 	start = 0
+	priority=""
 	try:
 		if sys.argv[1] =="scan":
 			mode="scan"
@@ -228,6 +223,7 @@ def main():
 			print start
 		elif sys.argv[1] =="gen":
 			mode="gen"
+			priority=sys.argv[2]
 		elif sys.argv[1] =="genNoName":
 			mode="genNoName"
 	except:		
@@ -237,7 +233,7 @@ def main():
 	elif mode=="validate":
 		validate(start)
 	elif mode=="gen":
-		genM3u()
+		genM3u(priority)
 	elif mode=="genNoName":
 		genNoNamePlaylist()
 
