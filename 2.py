@@ -63,6 +63,12 @@ def loadNoNameChanel():
 	except:
 		print ("ERROR: Dont load NoNameBase")
 
+def find(url,base):
+	for i in base:
+		if i.m_url==url:
+			return True
+	return False 
+
 def addToBase(name,url):
 	global g_Base
 	global g_NoNameChanels
@@ -74,7 +80,7 @@ def addToBase(name,url):
 		return
 	for a in g_Base:
 		if a.m_name == name:
-			if not(url in a.m_url):				
+			if not(find(url, a.m_url)):				
 				a.m_url.append(URL(url))
 			return
 	b = Chanel()
