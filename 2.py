@@ -166,6 +166,7 @@ def validate(flag,start):
 			(url.m_count, save) =  testUrl(p, url.m_url)
 			if url.m_count:
 				url.m_size=p.video_get_size()
+				print p.video_get_teletext()
 				print "Size:"+str(url.m_size)
 			if n%10==0 or save:
 				print "Saved: " + str(n)
