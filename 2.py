@@ -130,6 +130,7 @@ def scan():
 
 def testUrl(p,url):
 	ret=False
+	ii=0
 	print "url:" + url
 	if not(re.match("rtmp:",url)):
 		p.set_mrl(url)
@@ -145,7 +146,7 @@ def testUrl(p,url):
 				print p.get_state()
 				break
 		p.stop()
-	return ret
+	return (ret,ii==14)
 
 def validate(flag,start):
 	global g_Base
@@ -162,8 +163,8 @@ def validate(flag,start):
 				continue
 			if n < start:
 				continue
-			url.m_count = testUrl(p, url.m_url)			
-			if n%10==0:
+			(url.m_count, save) =  testUrl(p, url.m_url)			
+			if n%10==0 or save:
 				print "Saved: " + str(n)
 				saveBase()
 	saveBase()
@@ -204,7 +205,8 @@ def genNoNamePlaylist():
 	i = vlc.Instance()
 	p = i.media_player_new()
 	for url in g_NoNameChanels:
-		if testUrl(p,url):
+		(c,s)=testUrl(p,url)
+		if c:
 			validUrl.append(url)
 	f=open("noname.m3u","w")
 	f.write("#EXTM3U\n")
