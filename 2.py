@@ -21,7 +21,7 @@ class Chanel:
 
 g_noname_base_file="noname.db"
 g_base_name_file="base.db"
-g_playlist_name="edem.m3u"
+g_playlist_name=["edem.m3u"]
 g_Base = []
 g_NoNameChanels=[]
 
@@ -91,40 +91,42 @@ def addToBase(name,url):
 
 def scan():
 	global g_playlist_name
-	loadBase()
-	try:
-		f=open(g_playlist_name,"r")
-		l=f.readlines()
-		f.close()
-		n=0
-		max_ = len(l) 
-		while n < max_ :
-			i = l[n]
-			if re.match(r"#EXTINF",i):
-				n+=1
-				url=l[n]
-				if re.match(r"#",url):
-					continue
-				while re.match("[\s]{1,}",url):
+	for playlist_name in g_playlist_name:
+		print playlist_name
+		loadBase()
+		try:
+			f=open(playlist_name,"r")
+			l=f.readlines()
+			f.close()
+			n=0
+			max_ = len(l) 
+			while n < max_ :
+				i = l[n]
+				if re.match(r"#EXTINF",i):
 					n+=1
 					url=l[n]
-				s=re.split(",",i)
-				name = s[1]			
-				name = re.sub("\s{1,}$","",name)
-				url = re.sub("\s{1,}$","",url)
-				print("%d:%s url:%s" % (n,name,url))
+					if re.match(r"#",url):
+						continue
+					while re.match("[\s]{1,}",url):
+						n+=1
+						url=l[n]
+					s=re.split(",",i)
+					name = s[1]			
+					name = re.sub("\s{1,}$","",name)
+					url = re.sub("\s{1,}$","",url)
+					print("%d:%s url:%s" % (n,name,url))
 
-				addToBase(name,url)
-			elif re.match(r"#EXT-X-",i):
-				print("ERROR: find new tag %s", i)
-			n+=1
-	except:
-		print ("ERROR: File %s not exist" % g_playlist_name)
+					addToBase(name,url)
+				elif re.match(r"#EXT-X-",i):
+					print("ERROR: find new tag %s", i)
+				n+=1
+		except:
+			print ("ERROR: File %s not exist" % playlist_name)
 
-	if len(g_Base) > 0:
-		saveBase()
-	if len(g_NoNameChanels) > 0:
-		saveNoNameChanel()
+		if len(g_Base) > 0:
+			saveBase()
+		if len(g_NoNameChanels) > 0:
+			saveNoNameChanel()
 
 def testUrl(p,url):
 	ret=False
@@ -237,7 +239,9 @@ def main():
 	try:
 		if sys.argv[1] =="scan":
 			mode="scan"
-			g_playlist_name = sys.argv[2]
+			g_playlist_name=[]
+			for i in range (2,len(sys.argv)):
+				g_playlist_name.append(sys.argv[i])
 		elif sys.argv[1] =="validate":
 			mode="validate"
 			start = int(sys.argv[2])
