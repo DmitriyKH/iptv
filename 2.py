@@ -163,7 +163,10 @@ def validate(flag,start):
 				continue
 			if n < start:
 				continue
-			(url.m_count, save) =  testUrl(p, url.m_url)			
+			(url.m_count, save) =  testUrl(p, url.m_url)
+			if url.m_count:
+				url.m_size=p.video_get_size()
+				print "Size:"+str(url.m_size)
 			if n%10==0 or save:
 				print "Saved: " + str(n)
 				saveBase()
@@ -221,7 +224,12 @@ def genList(flag):
 	for i in g_Base:
 		for url in i.m_url:
 			if flag=="":
-				print("valid:%d name:\"%s\" url:\"%s\" " % (url.m_count, i.m_name, url.m_url))
+				size=(0,0)
+				try:
+					size=url.m_size
+				except:
+					pass
+				print("valid:%d name:\"%s\" url:\"%s\" size:%s" % (url.m_count, i.m_name, url.m_url, str(size)))
 				count += 1
 			elif flag=="name":
 				print i.m_name
