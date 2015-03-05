@@ -9,7 +9,7 @@ import vlc
 class URL:
 	def __init__(self,url):
 		self.m_url=url
-		self.m_count=0
+		self.m_count=-1
 
 
 class Chanel:
@@ -147,7 +147,7 @@ def testUrl(p,url):
 		p.stop()
 	return ret
 
-def validate(start):
+def validate(flag,start):
 	global g_Base
 	i = vlc.Instance()
 	p = i.media_player_new()
@@ -156,6 +156,10 @@ def validate(start):
 	for i in g_Base:
 		for url in i.m_url:
 			n+=1
+			if flag=="new" and url.m_count !=-1:
+				continue
+			if flag!="hard" and url.m_count == 0:
+				continue
 			if n < start:
 				continue
 			url.m_count = testUrl(p, url.m_url)			
@@ -244,7 +248,8 @@ def main():
 				g_playlist_name.append(sys.argv[i])
 		elif sys.argv[1] =="validate":
 			mode="validate"
-			start = int(sys.argv[2])
+			flag = sys.argv[2]
+			start = int(sys.argv[3])
 			print start
 		elif sys.argv[1] =="gen":
 			mode="gen"
@@ -259,7 +264,7 @@ def main():
 	if mode=="scan":
 		scan()
 	elif mode=="validate":
-		validate(start)
+		validate(flag,start)
 	elif mode=="gen":
 		genM3u(priority)
 	elif mode=="genNoName":
