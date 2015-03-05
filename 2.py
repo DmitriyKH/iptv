@@ -217,17 +217,22 @@ def genNoNamePlaylist():
 def genList(flag):
 	loadBase()
 	global g_Base
+	count=0
 	for i in g_Base:
 		for url in i.m_url:
 			if flag=="":
 				print("valid:%d name:\"%s\" url:\"%s\" " % (url.m_count, i.m_name, url.m_url))
+				count += 1
 			elif flag=="name":
 				print i.m_name
+				count += 1
 				break
 			elif flag=="valid":
 				if url.m_count:
 					print i.m_name
-					break	
+					count += 1
+					break
+	print ("Items:"+str(count))
 
 def main():
 	print ("******************************")
