@@ -127,9 +127,18 @@ def scan():
 			saveBase()
 		if len(g_NoNameChanels) > 0:
 			saveNoNameChanel()
-
+class Ret:
+	def __init__(self):
+		self.vid=-1
+		self.aid=-1
+		self.teletext=""
+		self.size=(0,0)
+		self.save=False
+	pass
 def testUrl(p,url):
-	ret=False
+	
+	ret= Ret()
+	ret.ret=False
 	ii=0
 	print "url:" + url
 	if not(re.match("rtmp:",url)):
@@ -138,15 +147,24 @@ def testUrl(p,url):
 		for ii in range(0,15):
 			time.sleep(1)
 			if p.is_playing():
-				ret=True
+				ret.ret=True
 			print str(ii)+" play:"+str(p.is_playing())+" state: "+ str(p.get_state())
-			if p.get_state()==vlc.State.NothingSpecial:
+			state = p.get_state()
+			ret.vid=p.video_get_track()
+			ret.aid=p.audio_get_track()
+			print (p.video_get_track_description())
+			ret.teletex=p.video_get_teletext()
+			ret.size=p.video_get_size()
+			if state == vlc.State.Playing and ret.vid<0 and ret.aid<0:
+				continue			
+			if state == vlc.State.NothingSpecial:
 				continue
-			elif p.get_state()!=vlc.State.Opening:
-				print p.get_state()
+			elif state != vlc.State.Opening:
+				print state
 				break
-		p.stop()
-	return (ret,ii==14)
+#		p.stop()
+		ret.save=ii==14
+	return ret
 
 def validate(flag,start):
 	global g_Base
@@ -163,14 +181,20 @@ def validate(flag,start):
 				continue
 			if n < start:
 				continue
-			(url.m_count, save) =  testUrl(p, url.m_url)
+
+			ret = testUrl(p, url.m_url)
+			url.count = ret.ret
+			save = ret.save
 			if url.m_count:
-				url.m_size=p.video_get_size()
-				print p.video_get_teletext()
+				url.m_size = ret.size
+				print i.m_name
+				print ("vid:%d aid:%d" % (ret.vid, ret.aid))
+				print ret.teletext
 				print "Size:"+str(url.m_size)
 			if n%10==0 or save:
 				print "Saved: " + str(n)
 				saveBase()
+			p.stop()
 	saveBase()
 
 def genM3u(priority):
@@ -209,9 +233,11 @@ def genNoNamePlaylist():
 	i = vlc.Instance()
 	p = i.media_player_new()
 	for url in g_NoNameChanels:
-		(c,s)=testUrl(p,url)
-		if c:
+		ret = testUrl(p,url)
+		print ret.size
+		if ret.ret:
 			validUrl.append(url)
+		p.stop()
 	f=open("noname.m3u","w")
 	f.write("#EXTM3U\n")
 	for url in validUrl:
